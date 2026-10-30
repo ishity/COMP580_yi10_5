@@ -1,0 +1,42 @@
+_ > nanoagent.plugin.v0001.ManifestConfig:
+id: tfidf-keyword-extract
+name: TF-IDF Keyword Extract
+version: 0.1.0
+status: ready
+spec: nanoagent.plugin/v0001
+
+runtime > nanoagent.plugin.v0001.RuntimeConfig:
+  type: mcp_stdio
+  command: [uv, run, --frozen, python, -m, plugin]
+
+permissions > nanoagent.plugin.v0001.PermissionsConfig:
+  network > nanoagent.plugin.v0001.NetworkConfig:
+    hosts: []
+  filesystem > nanoagent.plugin.v0001.FilesystemConfig:
+    write: [workspace]
+
+# One entry per contract.Tool; its input and output classes are contract.TOOLS's.
+tools > dict[contract.Tool, nanoagent.plugin.v0001.ToolConfig]:
+  describe_collection:
+    description: Count a bundled collection's papers, its first and last publication year, the distinct terms of its abstracts, and its concepts, with how many of them have a paper
+  select_papers:
+    description: Select the papers of a year range whose concept set holds a concept, save the selection in the workspace and return its paper_set_id and paper count; an unknown concept is refused with the closest valid names
+  rank_terms:
+    description: Rank every term of a selection by TF-IDF, with document frequencies counted over the whole collection (idf_scope collection) or over the selected papers only (idf_scope selection), save the full ranking and return the top k with their tf, df, N and score
+  exact_top_terms:
+    description: Rank a task's selection with collection document frequencies and carry its paper ids and first k + 1 terms with their counts, the task's reference
+
+# One entry per contract.Task; its input and output classes are contract.TASKS's.
+tasks > dict[contract.Task, nanoagent.plugin.v0001.TaskConfig]:
+  top-tfidf-terms:
+    description: Rank the k most distinctive terms of a topic's papers by TF-IDF, with document frequencies from the whole collection, under fixed tokenization, stopword, scoring and tie-breaking rules
+    runner: agent
+    tools: [describe_collection, select_papers, rank_terms]
+    reference: exact_top_terms
+    instructions: |-
+      Find the k most distinctive terms of a topic's papers in the dataset, ranked by TF-IDF.
+      The topic's papers are the dataset's papers published from first_year to last_year, both included, whose concept set holds the task's concept. Pass the concept exactly as given: it must be a concept of the dataset's vocabulary, and a name that is not one is refused with the closest valid names. A vocabulary concept may have no paper in the year range.
+      A paper's terms come from its abstract: Unicode NFKC, lowercase, every character outside a-z and 0-9 becomes a space (so hyphenated words split), then each token longer than 3 characters that ends in "s", but not in "ss", "us" or "is", loses that final "s" (so "models" and "model" are one term). A term is such a token of at least 3 characters that is not all digits and not one of a fixed list of English stopwords. The tools apply these rules; you do not tokenize anything yourself.
+      A scope is a set of papers: N is how many papers it holds, and df(t) is how many of them contain term t. The score of term t is its tf, the number of times t occurs in the topic's papers' abstracts summed over those papers, times ln(N / df(t)). Every term of the topic's papers is ranked by score, highest first, ties by term in alphabetical order; the top k are the first k, or all terms if there are fewer. Scores are shown to 6 decimal places, but the ranking uses their full precision.
+      Document frequencies come from the whole collection: the scope is every paper of the dataset, not only the topic's papers. A term that is common across the field, in most papers of the collection, is not distinctive of the topic, so its df must count the field's papers too. Counting df over the topic's papers alone would instead give a term in every topic paper, often the topic's own name, a score of 0.
+      Submit terms, the top k terms in order, exactly as returned, and papers, how many papers the topic holds. When no paper of the year range has the concept, the correct answer is an empty terms list with papers 0.

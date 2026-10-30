@@ -1,0 +1,13 @@
+_ > nanoagent.plugin.v0001.ProductConfig:
+tagline: "Rank the terms that set a research topic apart, by TF-IDF over ACL Anthology abstracts"
+summary: "Pick an NLP topic, a year range and how many terms you want, and an agent finds the topic's most distinctive words: it selects the topic's ACL Anthology papers and ranks every word of their abstracts by TF-IDF, with document frequencies from the whole collection so that words common across the field do not count as distinctive. Tokens, stopwords, scores and ties follow fixed rules, and the verifier recomputes every score."
+highlights:
+  - "Real data: 2,924 ACL Anthology abstracts from 2018 and 2019, tagged with 493 NLP concepts"
+  - "One judgment that matters: counting document frequencies over the collection, not only the topic's papers"
+  - "Exact scores in 40-digit decimal arithmetic, with ties broken by term"
+  - "A deterministic verifier checks the paper count, that the ranking was really computed, and every term in order"
+steps:
+  - "Choose a dataset, a concept, a year range and k"
+  - "The agent selects the topic's papers in the year range"
+  - "It ranks their terms by TF-IDF over the whole collection"
+  - "It submits the top k terms and the paper count, and the verdict shows whether every term is in place"

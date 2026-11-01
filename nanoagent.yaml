@@ -1,7 +1,7 @@
 _ > nanoagent.plugin.v0001.ManifestConfig:
 id: tfidf-keyword-extract
 name: TF-IDF Keyword Extract
-version: 0.1.1
+version: 0.1.2
 status: ready
 spec: nanoagent.plugin/v0001
 
@@ -40,3 +40,4 @@ tasks > dict[contract.Task, nanoagent.plugin.v0001.TaskConfig]:
       A scope is a set of papers: N is how many papers it holds, and df(t) is how many of them contain term t. The score of term t is its tf, the number of times t occurs in the topic's papers' abstracts summed over those papers, times ln(N / df(t)). Every term of the topic's papers is ranked by score, highest first, ties by term in alphabetical order; the top k are the first k, or all terms if there are fewer. Scores are shown to 6 decimal places, but the ranking uses their full precision.
       Document frequencies come from the whole collection: the scope is every paper of the dataset, not only the topic's papers. A term that is common across the field, in most papers of the collection, is not distinctive of the topic, so its df must count the field's papers too. Counting df over the topic's papers alone would instead give a term in every topic paper, often the topic's own name, a score of 0.
       Submit terms, the top k terms in order, exactly as returned, and papers, how many papers the topic holds. When no paper of the year range has the concept, the correct answer is an empty terms list with papers 0.
+      Keep each step short: every reply is limited to about 2,000 tokens, and a reply that runs out before calling a tool ends the task, so call a tool after brief reasoning instead of computing estimates by hand.
